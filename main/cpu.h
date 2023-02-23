@@ -33,7 +33,7 @@ typedef struct CPU
 	float ipc; // Instructions per cycle
 	int pc; // Program Counter
 	int clock; // Total Cycle Completed
-
+	int memoryPort; // Memory Port
 	// The Pipeline
 	Stages fetch_latch; 
 	Stages decode_latch;
