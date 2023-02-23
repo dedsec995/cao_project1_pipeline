@@ -28,6 +28,9 @@ CPU_init(char* filename)
     /* Create register files */
     cpu->regs= create_registers(REG_COUNT);
     cpu->filename = filename;
+    cpu->fetch_latch.has_inst = 1;
+    cpu->clock = 1;
+    cpu->pc = 0000;
     return cpu;
 }
 
@@ -115,7 +118,7 @@ CPU_run(CPU* cpu)
     simulate(cpu);
 
     printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
-    printf("Total execution cycles: %d\n",cpu->cycles);
+    printf("Total execution cycles: %d\n",cpu->clock);
     printf("Total instruction simulated: %d\n", cpu->instructionLength);
     printf("IPC: %f\n",cpu->ipc);
 
@@ -140,11 +143,109 @@ create_registers(int size){
 *The Main Pipeline Implementation
 */ 
 void simulate(CPU* cpu){
-    for (int i=0; i<=cpu->instructionLength; i++) {
-        printf("Instructions: %s",cpu->instructions[i]);
+    // for (int i=0; i<=cpu->instructionLength; i++) {
+    //     printf("Instructions: %s",cpu->instructions[i]);
+    //     printf("--------------------------------\n");
+    // } 
+    for(int i =1;i<cpu->instructionLength;i++){
+        writeback_unit(cpu);
+        memory2_unit(cpu);
+        memory1_unit(cpu); 
+        branch_unit(cpu); 
+        divider_unit(cpu); 
+        multiplier_unit(cpu);
+        adder_unit(cpu); 
+        register_read_unit(cpu); 
+        analysis_unit(cpu); 
+        decode_unit(cpu); 
+        fetch_unit(cpu); 
+        cpu->clock++;
+        printf("\nClock Cycle: %d\n",cpu->clock);
         printf("--------------------------------\n");
     }
     //TODO Loop Or recursion?
     // Create Struct or F!!!
     // printf("Hahaha");
 }
+
+int writeback_unit(CPU* cpu){
+    if(cpu->writeback_latch.has_inst == 1){
+        printf("Executing Writeback\n");
+        cpu->writeback_latch.has_inst = 0;
+        return(0);
+    }
+    else{
+        return(0);
+    }
+}
+
+void memory2_unit(CPU* cpu){
+    if(cpu->memory2_latch.has_inst == 1){
+        printf("Executing Memory2\n");
+        cpu->writeback_latch.has_inst = 1;
+    }
+}
+
+void memory1_unit(CPU* cpu){
+    if(cpu->memory1_latch.has_inst == 1){
+        printf("Executing Memory1\n");
+        cpu->memory2_latch.has_inst = 1;
+    }
+}
+
+void branch_unit(CPU* cpu){
+    if(cpu->branch_latch.has_inst == 1){
+        printf("Executing branch\n");
+        cpu->memory1_latch.has_inst = 1;
+    }
+}
+
+void divider_unit(CPU* cpu){
+    if(cpu->divider_latch.has_inst == 1){
+        printf("Executing divider\n");
+        cpu->branch_latch.has_inst = 1;
+    }
+}
+
+void multiplier_unit(CPU* cpu){
+    if(cpu->multiplier_latch.has_inst == 1){
+        printf("Executing multipler\n");
+        cpu->divider_latch.has_inst = 1;
+    }
+}
+
+void adder_unit(CPU* cpu){
+    if(cpu->adder_latch.has_inst == 1){
+        printf("Executing adder\n");
+        cpu->multiplier_latch.has_inst = 1;
+    }
+}
+
+void register_read_unit(CPU* cpu){
+    if(cpu->register_read_latch.has_inst == 1){
+        printf("Executing register read\n");
+        cpu->adder_latch.has_inst = 1;
+    }
+}
+
+void analysis_unit(CPU* cpu){
+    if(cpu->analysis_latch.has_inst == 1){
+        printf("Executing analysis\n");
+        cpu->register_read_latch.has_inst = 1;
+    }
+}
+
+void decode_unit(CPU* cpu){
+    if(cpu->decode_latch.has_inst == 1){
+        printf("Executing decode\n");
+        cpu->analysis_latch.has_inst = 1;
+    }
+}
+
+void fetch_unit(CPU* cpu){
+    if(cpu->fetch_latch.has_inst == 1){
+        printf("Executing fetch\n");
+        cpu->decode_latch.has_inst = 1;
+    }
+}
+

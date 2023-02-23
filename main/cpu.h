@@ -14,18 +14,38 @@ typedef struct Register
 						// False: register is ready
 } Register;
 
+typedef struct Stages
+{
+	char opcode_str[128]; // The instruction
+    int pc;          // Program Counter
+    bool has_inst;   // Is this the turn of this Pipeline Stage
+} Stages;
+
 /* Model of CPU */
 typedef struct CPU
 {
 	/* Integer register file */
-	Register *regs;
-	char* filename;
-	char instructions[NO_OF_LINE][MAX_LENGTH];
-	int instructionLength;
-	int hazard;
-	int cycles;
-	float ipc;
-	
+	Register *regs;	// The registers
+	char* filename; // File to be read
+	char instructions[NO_OF_LINE][MAX_LENGTH]; // Instructions Char array
+	int instructionLength; // Total Instruction Length
+	int hazard; // Total structural hazard done
+	float ipc; // Instructions per cycle
+	int pc; // Program Counter
+	int clock; // Total Cycle Completed
+
+	// The Pipeline
+	Stages fetch_latch; 
+	Stages decode_latch;
+	Stages analysis_latch;
+	Stages register_read_latch;
+	Stages adder_latch;
+	Stages multiplier_latch;
+	Stages divider_latch;
+	Stages branch_latch;
+	Stages memory1_latch;
+	Stages memory2_latch;
+	Stages writeback_latch;
 } CPU;
 
 CPU*
@@ -42,5 +62,38 @@ CPU_stop(CPU* cpu);
 
 void 
 simulate(CPU* cpu);
+
+void 
+fetch_unit(CPU* cpu);
+
+void 
+decode_unit(CPU* cpu);
+
+void 
+analysis_unit(CPU* cpu);
+
+void 
+register_read_unit(CPU* cpu);
+
+void 
+adder_unit(CPU* cpu);
+
+void 
+multiplier_unit(CPU* cpu);
+
+void 
+divider_unit(CPU* cpu);
+
+void 
+branch_unit(CPU* cpu);
+
+void 
+memory1_unit(CPU* cpu);
+
+void 
+memory2_unit(CPU* cpu);
+
+int
+writeback_unit(CPU* cpu);
 
 #endif

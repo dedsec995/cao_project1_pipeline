@@ -1,0 +1,6 @@
+{
+  "window.titleBarStyle": "custom",
+  "C_Cpp.intelliSenseCacheSize": 0,
+  "C_Cpp.intelliSenseMemoryLimit": 256,
+  "terminal.integrated.enablePersistentSessions": false
+}
