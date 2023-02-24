@@ -251,7 +251,16 @@ void fetch_unit(CPU* cpu){
         cpu->fetch_latch.pc = cpu->pc;
         cpu->pc++;
         printf("Executing fetch: %s\n",cpu->instructions[cpu->fetch_latch.pc]);
-        cpu->decode_latch = cpu->fetch_latch;
+        char str1[128];
+        strcpy(str1,cpu->instructions[cpu->fetch_latch.pc]);
+        int init_size = strlen(str1);
+        printf("%d",init_size);
+        char delim[] = " ";
+        char *ptr = strtok(str1, delim);
+        printf("%s", *ptr);
+        // cpu->fetch_latch.instAddr = *ptr;
+        // ptr = strtok(str1, delim);
+        // cpu->decode_latch = cpu->fetch_latch;
         // if (cpu->fetch_latch.opcode == OPCODE_HALT)
         // {
         //     cpu->fetch.has_insn = FALSE;

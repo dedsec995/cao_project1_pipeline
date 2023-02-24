@@ -19,6 +19,18 @@ typedef struct Stages
 	char opcode_str[128]; // The instruction
     int pc;          // Program Counter
     bool has_inst;   // Is this the turn of this Pipeline Stage
+	int instAddr;
+	char opcode[128];
+	char rg1[4];
+	char rg2[4];
+	char rg3[4];
+	int rg1_val;
+	int rg2_val;
+	int rg3_val;
+	int buffer;
+	char or1[4];
+	char or2[4];
+
 } Stages;
 
 /* Model of CPU */
