@@ -150,8 +150,11 @@ void simulate(CPU* cpu){
     // } 
     printf("\nClock Cycle: %d\n",cpu->clock);
     printf("--------------------------------\n");
-    for(int i =1;i<=cpu->instructionLength;i++){
-        writeback_unit(cpu);
+    int last_inst = 0;
+    for(;;){
+        if(writeback_unit(cpu)){
+            break;
+        }
         memory2_unit(cpu);
         memory1_unit(cpu); 
         branch_unit(cpu); 
@@ -174,7 +177,12 @@ void simulate(CPU* cpu){
 int writeback_unit(CPU* cpu){
     if(cpu->writeback_latch.has_inst == 1){
         printf("Executing Writeback: %s",cpu->instructions[cpu->writeback_latch.pc]);
-        cpu->writeback_latch.has_inst = 0;
+        // cpu->writeback_latch.has_inst = 0;
+        if(strcmp(cpu->writeback_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Writeback");
+            cpu->writeback_latch.has_inst = 0;
+            return(1);
+        }
         return(0);
     }
     else{
@@ -187,6 +195,10 @@ void memory2_unit(CPU* cpu){
         printf("Executing memory2: %s",cpu->instructions[cpu->memory2_latch.pc]);
         cpu->memoryPort = 1;
         cpu->writeback_latch = cpu->memory2_latch;
+        if(strcmp(cpu->memory2_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Memory2");
+            cpu->memory2_latch.has_inst = 0;
+        }
     }
 }
 
@@ -194,6 +206,10 @@ void memory1_unit(CPU* cpu){
     if(cpu->memory1_latch.has_inst == 1){
         printf("Executing memory1: %s",cpu->instructions[cpu->memory1_latch.pc]);
         cpu->memory2_latch = cpu->memory1_latch;
+        if(strcmp(cpu->memory1_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Memory1");
+            cpu->memory1_latch.has_inst = 0;
+        }
     }
 }
 
@@ -201,6 +217,10 @@ void branch_unit(CPU* cpu){
     if(cpu->branch_latch.has_inst == 1){
         printf("Executing branch: %s",cpu->instructions[cpu->branch_latch.pc]);
         cpu->memory1_latch = cpu->branch_latch;
+        if(strcmp(cpu->branch_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Branch");
+            cpu->branch_latch.has_inst = 0;
+        }
     }
 }
 
@@ -208,6 +228,10 @@ void divider_unit(CPU* cpu){
     if(cpu->divider_latch.has_inst == 1){
         printf("Executing divider: %s",cpu->instructions[cpu->divider_latch.pc]);
         cpu->branch_latch = cpu->divider_latch;
+        if(strcmp(cpu->divider_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Divider");
+            cpu->divider_latch.has_inst = 0;
+        }
     }
 }
 
@@ -215,6 +239,10 @@ void multiplier_unit(CPU* cpu){
     if(cpu->multiplier_latch.has_inst == 1){
         printf("Executing multiplier: %s",cpu->instructions[cpu->multiplier_latch.pc]);
         cpu->divider_latch = cpu->multiplier_latch;
+        if(strcmp(cpu->multiplier_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Multipler");
+            cpu->multiplier_latch.has_inst = 0;
+        }
     }
 }
 
@@ -222,6 +250,10 @@ void adder_unit(CPU* cpu){
     if(cpu->adder_latch.has_inst == 1){
         printf("Executing adder: %s",cpu->instructions[cpu->adder_latch.pc]);
         cpu->multiplier_latch = cpu->adder_latch;
+        if(strcmp(cpu->adder_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Adder");
+            cpu->adder_latch.has_inst = 0;
+        }
     }
 }
 
@@ -229,6 +261,10 @@ void register_read_unit(CPU* cpu){
     if(cpu->register_read_latch.has_inst == 1){
         printf("Executing Register Read: %s",cpu->instructions[cpu->register_read_latch.pc]);
         cpu->adder_latch = cpu->register_read_latch;
+        if(strcmp(cpu->register_read_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for Register read");
+            cpu->register_read_latch.has_inst = 0;
+        }
     }
 }
 
@@ -236,6 +272,10 @@ void analysis_unit(CPU* cpu){
     if(cpu->analysis_latch.has_inst == 1){
         printf("Executing analysis: %s",cpu->instructions[cpu->analysis_latch.pc]);
         cpu->register_read_latch=cpu->analysis_latch;
+        if(strcmp(cpu->analysis_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for analysis");
+            cpu->analysis_latch.has_inst = 0;
+        }
     }
 }
 
@@ -243,24 +283,155 @@ void decode_unit(CPU* cpu){
     if(cpu->decode_latch.has_inst == 1){
         printf("Executing decode: %s",cpu->instructions[cpu->decode_latch.pc]);
         cpu->analysis_latch = cpu->decode_latch;
+        if(strcmp(cpu->decode_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for decode");
+            cpu->decode_latch.has_inst = 0;
+        }
     }
 }
 
-void fetch_unit(CPU* cpu){
+int fetch_unit(CPU* cpu){
     if(cpu->fetch_latch.has_inst == 1 && cpu->memoryPort ==1){
         cpu->fetch_latch.pc = cpu->pc;
         cpu->pc++;
-        printf("Executing fetch: %s\n",cpu->instructions[cpu->fetch_latch.pc]);
+        printf("\nExecuting fetch: %s",cpu->instructions[cpu->fetch_latch.pc]);
         char str1[128];
         strcpy(str1,cpu->instructions[cpu->fetch_latch.pc]);
-        int init_size = strlen(str1);
-        printf("%d",init_size);
-        char delim[] = " ";
-        char *ptr = strtok(str1, delim);
-        printf("%s", *ptr);
-        // cpu->fetch_latch.instAddr = *ptr;
-        // ptr = strtok(str1, delim);
+
+        //-----------------------------Dynamic Spliting---------------------------------------------
+        char **token= NULL;
+        char *p = str1;
+        char *sepa=" ";
+        size_t  arr_len = 0,q;
+        for (;;)
+        {
+            p += strspn(p, sepa);
+            if (!(q = strcspn(p, sepa)))
+                    break;
+            if (q)
+            {
+                    token = realloc(token, (arr_len+1) * sizeof(char *));
+                    token[arr_len] = malloc(q+1);
+                    strncpy(token[arr_len], p, q);
+                    token[arr_len][q] = 0;
+                    arr_len++;
+                    p += q;
+            }
+        }
+        token = realloc(token, (arr_len+1) * sizeof(char *));
+        token[arr_len] = NULL;
+        cpu->fetch_latch.instLen;
+        //-------------------------------------Dynamic Spliting------------------------------------------
+        if(arr_len == 5 ){
+            cpu->fetch_latch.instAddr = (atoi)(token[0]);
+            strcpy(cpu->fetch_latch.opcode,token[1]);
+            strcpy(cpu->fetch_latch.rg1,token[2]);
+            strcpy(cpu->fetch_latch.or1,token[3]);
+            strcpy(cpu->fetch_latch.or2,token[4]);
+        }
+        else if(arr_len == 4){
+           cpu->fetch_latch.instAddr = (atoi)(token[0]);
+            strcpy(cpu->fetch_latch.opcode,token[1]);
+            strcpy(cpu->fetch_latch.rg1,token[2]);
+            strcpy(cpu->fetch_latch.or1,token[3]); 
+        }
+        else if(arr_len == 3){
+           cpu->fetch_latch.instAddr = (atoi)(token[0]);
+            strcpy(cpu->fetch_latch.opcode,token[1]);
+            strcpy(cpu->fetch_latch.rg1,token[2]); 
+        }
+        else if(arr_len == 2){
+           cpu->fetch_latch.instAddr = (atoi)(token[0]);
+            strcpy(cpu->fetch_latch.opcode,token[1]);
+        }
+        if(strcmp(cpu->fetch_latch.opcode,"ret") == 10){
+            // printf("Last Instruction for fetch");
+            cpu->decode_latch = cpu->fetch_latch;
+            cpu->fetch_latch.has_inst = 0;
+            return(0);
+        }
+        cpu->decode_latch = cpu->fetch_latch;
+
+        //--------------------------Another Try-------------------------------
+        // char delim[] = " ";
+        // char *ptr = strtok(str1, delim);
+        // char *token[6];
+        // int i = 0;
+        // while (ptr != NULL)
+        // {
+        //     token[i++] = ptr;
+        //     ptr = strtok(NULL, delim);
+        //     printf("i: %d\n",i);
+        // }
+        // // for (i = 0; i < 6; ++i) 
+        // //     printf("%s\n", token[i]);
+        // // printf("%s\n",token[1]);
+        // if(token[0] != NULL){
+        //     cpu->fetch_latch.instAddr = (atoi)(token[0]);
+        //     // printf("%d\n",cpu->fetch_latch.instAddr);
+        // }
+        // if(token[1] != NULL){
+        //     strcpy(cpu->fetch_latch.opcode,token[1]);
+        //     // printf("%s\n",cpu->fetch_latch.opcode);
+        //     if(strcmp(cpu->fetch_latch.opcode,"ret") == 10){
+        //         // printf("Inside");
+        //         cpu->fetch_latch.has_inst = 0;
+        //         return(0);
+        //     }
+        // }
+        // if(token[2] != NULL){
+        //     strcpy(cpu->fetch_latch.rg1,token[2]);
+        //     // printf("%s\n",cpu->fetch_latch.rg1);
+        // }
+        // if(token[3] != NULL){
+        //     strcpy(cpu->fetch_latch.or1,token[3]);
+        //     // printf("%s\n",cpu->fetch_latch.or1);
+        // }
+        // printf("%s",(token[4]));
+        // // if(strlen(token[4]) != 221 &&  strlen(token[4]) != 0){
+        // //     // printf("Token 4: %s\n",token[4]);
+        // //     strcpy(cpu->fetch_latch.or2,token[4]);
+        // //     // printf("%s\n",cpu->fetch_latch.or2);
+        // // }
         // cpu->decode_latch = cpu->fetch_latch;
+
+        //--------------------------Another Try-------------------------------
+        
+            
+
+
+
+        //----------------------------Old----------------------------
+
+        // printf("'%s'\n", ptr);
+        // cpu->fetch_latch.instAddr = (atoi)(ptr);
+        // printf("%d\n",cpu->fetch_latch.instAddr);
+        // ptr = strtok(NULL, delim);
+        // strcpy(cpu->fetch_latch.opcode,ptr);
+        // printf("%s\n",cpu->fetch_latch.opcode);   
+        // if(strcmp(cpu->fetch_latch.opcode,"ret") == 10){
+        //     printf("Inside");
+        //     cpu->fetch_latch.has_inst = 0;
+        //     return(0);
+        // }
+        // ptr = strtok(NULL, delim);
+        // strcpy(cpu->fetch_latch.rg1,ptr);
+        // printf("%s\n",cpu->fetch_latch.rg1);
+        // ptr = strtok(NULL, delim);
+        // strcpy(cpu->fetch_latch.or1,ptr);
+        // printf("%s\n",cpu->fetch_latch.or1);
+        // ptr = strtok(NULL, delim);
+        // strcpy(cpu->fetch_latch.or2,ptr);
+        // printf("%s\n",cpu->fetch_latch.or2);
+
+        //------------------Old----------------------
+
+        // printf("'%s'\n", ptr);
+        // ptr = strtok(NULL, delim);
+        // printf("'%s'\n", ptr);
+        // printf("%s",cpu->fetch_latch.instAddr);
+        // cpu->decode_latch = cpu->fetch_latch;
+        // ptr = strtok(str1, delim);
         // if (cpu->fetch_latch.opcode == OPCODE_HALT)
         // {
         //     cpu->fetch.has_insn = FALSE;

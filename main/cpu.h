@@ -19,17 +19,18 @@ typedef struct Stages
 	char opcode_str[128]; // The instruction
     int pc;          // Program Counter
     bool has_inst;   // Is this the turn of this Pipeline Stage
-	int instAddr;
-	char opcode[128];
-	char rg1[4];
-	char rg2[4];
-	char rg3[4];
-	int rg1_val;
-	int rg2_val;
-	int rg3_val;
-	int buffer;
-	char or1[4];
-	char or2[4];
+	int instAddr; // Instruction what??
+	int instLen; // Current Instruction Length
+	char opcode[128]; // Opcode String
+	char rg1[4]; // Register 1
+	char rg2[4]; // Register 2
+	char rg3[4]; // Register 3
+	int rg1_val; // Register 1 Value
+	int rg2_val; // Register 2 value
+	int rg3_val; // Register 3 Value
+	int buffer; // Temp value
+	char or1[4]; // oprand 1
+	char or2[4]; // oprand 2
 
 } Stages;
 
@@ -46,6 +47,7 @@ typedef struct CPU
 	int pc; // Program Counter
 	int clock; // Total Cycle Completed
 	int memoryPort; // Memory Port
+
 	// The Pipeline
 	Stages fetch_latch; 
 	Stages decode_latch;
@@ -58,7 +60,13 @@ typedef struct CPU
 	Stages memory1_latch;
 	Stages memory2_latch;
 	Stages writeback_latch;
+
 } CPU;
+
+//	    |						      |
+//	    | Function Declarations Below |
+//	    |						      |
+//	    v						      v
 
 CPU*
 CPU_init();
@@ -75,7 +83,7 @@ CPU_stop(CPU* cpu);
 void 
 simulate(CPU* cpu);
 
-void 
+int 
 fetch_unit(CPU* cpu);
 
 void 
