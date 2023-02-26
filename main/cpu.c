@@ -9,7 +9,7 @@
 #include "cpu.h"
 
 #define REG_COUNT 128
-#define MAX_LENGTH 1024
+#define MAXY_LENGHT 512
 
  char* programFile;
 
@@ -45,34 +45,23 @@ CPU_stop(CPU* cpu)
 }
 
 /*
- *This function read the file and add the data to string array 
+ * This function read the file and add the data to string array 
  */
 void
 load_the_instructions(CPU *cpu){
-
-    FILE *fp = fopen(cpu->filename, "r");
+    FILE *filePointer = fopen(cpu->filename, "r");
     int county = 0;
-    int i;
-    if (fp == NULL)
+    if (filePointer == NULL)
     {
         printf("Error: could not open file %s", cpu->filename);
     }
-
-    // reading line by line, max 1024 bytes
-    // const unsigned MAX_LENGTH = 1024;
-    char buffer[MAX_LENGTH];
-
-    while (fgets(buffer, MAX_LENGTH, fp)){
-        // printf("%s", buffer);
+    char buffer[MAXY_LENGHT];
+    while (fgets(buffer, MAXY_LENGHT, filePointer)){
         strcpy(cpu->instructions[county],buffer);
-        // printf("The String array: %s\n",a[0]);
-        // printf("The String array: %s\n",a[1]);
         county++;
     }
     cpu->instructionLength = county ;
-
-    // close the file
-    fclose(fp);
+    fclose(filePointer);
 }
 
 /*
@@ -115,13 +104,14 @@ CPU_run(CPU* cpu)
     load_the_instructions(cpu);
     // print_registers(cpu);
     // print_instructions(cpu);
-    //TODO Create more Functions
+    cpu->hazard = 0;
     simulate(cpu);
-
+    print_registers(cpu);
+    cpu->ipc = (double)cpu->instructionLength/(double)cpu->clock;
     printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
     printf("Total execution cycles: %d\n",cpu->clock);
     printf("Total instruction simulated: %d\n", cpu->instructionLength);
-    printf("IPC: %f\n",cpu->ipc);
+    printf("IPC: %6f\n",cpu->ipc);
 
     return 0;
 }
@@ -183,6 +173,8 @@ int writeback_unit(CPU* cpu){
             cpu->writeback_latch.has_inst = 0;
             return(1);
         }
+        printf("%d\n",cpu->writeback_latch.buffer);
+        cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = 5;
         return(0);
     }
     else{
@@ -198,6 +190,11 @@ void memory2_unit(CPU* cpu){
         if(strcmp(cpu->memory2_latch.opcode,"ret") == 10){
             // printf("Last Instruction for Memory2");
             cpu->memory2_latch.has_inst = 0;
+        }
+        else if (strcmp(cpu->memory2_latch.opcode,"ld") == 10){
+            cpu->hazard+=1;
+            cpu->memoryPort = 0;
+            printf("ld called, Halting Fetch");
         }
     }
 }
@@ -232,6 +229,11 @@ void divider_unit(CPU* cpu){
             // printf("Last Instruction for Divider");
             cpu->divider_latch.has_inst = 0;
         }
+        else if(strcmp(cpu->divider_latch.opcode,"mul") == 0){
+            //TODO Write Divide Logic
+            cpu->divider_latch.buffer = atoi(cpu->divider_latch.or1+1) / atoi(cpu->divider_latch.or2+1);
+            printf("div the numbers\n");
+        }
     }
 }
 
@@ -243,6 +245,12 @@ void multiplier_unit(CPU* cpu){
             // printf("Last Instruction for Multipler");
             cpu->multiplier_latch.has_inst = 0;
         }
+        else if(strcmp(cpu->multiplier_latch.opcode,"mul") == 0){
+            //TODO Write Multiplication Logic
+            cpu->multiplier_latch.buffer = atoi(cpu->multiplier_latch.or1+1) * atoi(cpu->multiplier_latch.or2+1);
+            // printf("mul the numbers\n");
+            printf("%d",cpu->multiplier_latch.buffer);
+        }
     }
 }
 
@@ -252,7 +260,18 @@ void adder_unit(CPU* cpu){
         cpu->multiplier_latch = cpu->adder_latch;
         if(strcmp(cpu->adder_latch.opcode,"ret") == 10){
             // printf("Last Instruction for Adder");
-            cpu->adder_latch.has_inst = 0;
+        cpu->adder_latch.has_inst = 0;
+        }
+        else if(strcmp(cpu->adder_latch.opcode,"add") == 0){
+            //TODO Write Addition Logic
+            // printf("Add the numbers\n");
+            cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) + atoi(cpu->adder_latch.or2+1);
+            printf("%d",cpu->adder_latch.buffer);
+        }
+        else if(strcmp(cpu->adder_latch.opcode,"sub") == 0){
+            //TODO Write Subtraction Logic
+            cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) - atoi(cpu->adder_latch.or2+1);
+            // printf("Sub the numbers\n");
         }
     }
 }
@@ -265,6 +284,9 @@ void register_read_unit(CPU* cpu){
             // printf("Last Instruction for Register read");
             cpu->register_read_latch.has_inst = 0;
         }
+        cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
+        // printf("Reg: %s Value: %d",cpu->register_read_latch.rg1,cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value); 
+        // printf("%s",cpu->register_read_latch.rg1+1);
     }
 }
 
@@ -436,6 +458,11 @@ int fetch_unit(CPU* cpu){
         // {
         //     cpu->fetch.has_insn = FALSE;
         // };
+    }
+    else if(cpu->memoryPort==0){
+        printf("nExecuting fetch: Halted due to MemoryPort");
+        cpu->fetch_latch.has_inst == 0;
+        cpu->decode_latch = cpu->fetch_latch;
     }
 }
 

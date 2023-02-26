@@ -21,7 +21,7 @@ typedef struct Stages
     bool has_inst;   // Is this the turn of this Pipeline Stage
 	int instAddr; // Instruction what??
 	int instLen; // Current Instruction Length
-	char opcode[128]; // Opcode String
+	char opcode[128]; // Opcode
 	char rg1[4]; // Register 1
 	char rg2[4]; // Register 2
 	char rg3[4]; // Register 3
