@@ -142,6 +142,7 @@ void simulate(CPU* cpu){
     printf("\nClock Cycle #: %d\n",cpu->clock);
     printf("--------------------------------\n");
     int last_inst = 0;
+    cpu->fetch_latch.halt_triggered = 0;
     for(;;){
         if(writeback_unit(cpu)){
             break;
@@ -167,7 +168,7 @@ void simulate(CPU* cpu){
 }
 
 int writeback_unit(CPU* cpu){
-    if(cpu->writeback_latch.has_inst == 1){
+    if(cpu->writeback_latch.has_inst == 1 && cpu->writeback_latch.halt_triggered==0){
         printf("WB             : %s",cpu->instructions[cpu->writeback_latch.pc]);
         // cpu->writeback_latch.has_inst = 0;
         if(strcmp(cpu->writeback_latch.opcode,"ret") == 10){
@@ -179,20 +180,30 @@ int writeback_unit(CPU* cpu){
             cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = atoi(cpu->writeback_latch.or1+1);
             return(0);
         }
+        else if (strcmp(cpu->writeback_latch.opcode,"ld")==0){
+            return(0);
+        }
         // printf("%d\n",cpu->writeback_latch.buffer);
         cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = cpu->writeback_latch.buffer;
         return(0);
     }
-    else{
+    else if (cpu->writeback_latch.halt_triggered==1){
+        cpu->writeback_latch.halt_triggered = 0;
         return(0);
     }
 }
 
 void memory2_unit(CPU* cpu){
-    if(cpu->memory2_latch.has_inst == 1){
+    if(cpu->memory2_latch.has_inst == 1 && cpu->memory2_latch.halt_triggered==0){
         // printf("%d",cpu->memory2_latch.buffer);
+        // printf("%s",cpu->memory2_latch.opcode);
         printf("Mem2           : %s",cpu->instructions[cpu->memory2_latch.pc]);
-        cpu->memoryPort = 1;
+        // if (cpu->halt_triggered == 1){
+        //     cpu->fetch_latch.has_inst = 1;
+        //     cpu->halt_triggered == 0;
+        //     cpu->memoryPort = 1;
+        // }
+        // printf("%d",strcmp(cpu->memory2_latch.opcode,"ld"));
         if(strcmp(cpu->memory2_latch.opcode,"ret") == 10){
             cpu->writeback_latch = cpu->memory2_latch;
             // printf("Last Instruction for Memory2");
@@ -202,14 +213,18 @@ void memory2_unit(CPU* cpu){
         else if (strcmp(cpu->memory2_latch.opcode,"ld") == 0){
             cpu->hazard+=1;
             cpu->memoryPort = 0;
+            cpu->fetch_latch.halt_triggered = 1;
             printf("ld called, Halting Fetch\n");
         }
+        cpu->writeback_latch = cpu->memory2_latch;
+    }
+    else if (cpu->memory2_latch.halt_triggered==1){
         cpu->writeback_latch = cpu->memory2_latch;
     }
 }
 
 void memory1_unit(CPU* cpu){
-    if(cpu->memory1_latch.has_inst == 1){
+    if(cpu->memory1_latch.has_inst == 1 && cpu->memory1_latch.halt_triggered==0){
         // printf("%d",cpu->memory1_latch.buffer);
         printf("Mem1           : %s",cpu->instructions[cpu->memory1_latch.pc]);
         if(strcmp(cpu->memory1_latch.opcode,"ret") == 10){
@@ -220,10 +235,13 @@ void memory1_unit(CPU* cpu){
         }
         cpu->memory2_latch = cpu->memory1_latch;
     }
+    else if (cpu->memory1_latch.halt_triggered==1){
+        cpu->memory2_latch = cpu->memory1_latch;
+    }
 }
 
 void branch_unit(CPU* cpu){
-    if(cpu->branch_latch.has_inst == 1){
+    if(cpu->branch_latch.has_inst == 1 && cpu->branch_latch.halt_triggered==0){
         // printf("%d",cpu->branch_latch.buffer);
         printf("BR             : %s",cpu->instructions[cpu->branch_latch.pc]);
         if(strcmp(cpu->branch_latch.opcode,"ret") == 10){
@@ -234,10 +252,13 @@ void branch_unit(CPU* cpu){
         }
         cpu->memory1_latch = cpu->branch_latch;
     }
+    else if (cpu->branch_latch.halt_triggered==1){
+        cpu->memory1_latch = cpu->branch_latch;
+    }
 }
 
 void divider_unit(CPU* cpu){
-    if(cpu->divider_latch.has_inst == 1){
+    if(cpu->divider_latch.has_inst == 1 && cpu->divider_latch.halt_triggered==0){
         // printf("%d",cpu->divider_latch.buffer);
         printf("DIV            : %s",cpu->instructions[cpu->divider_latch.pc]);
         if(strcmp(cpu->divider_latch.opcode,"ret") == 10){
@@ -254,10 +275,13 @@ void divider_unit(CPU* cpu){
         }
         cpu->branch_latch = cpu->divider_latch;
     }
+    else if (cpu->divider_latch.halt_triggered==1){
+        cpu->branch_latch = cpu->divider_latch;
+    }
 }
 
 void multiplier_unit(CPU* cpu){
-    if(cpu->multiplier_latch.has_inst == 1){
+    if(cpu->multiplier_latch.has_inst == 1 && cpu->multiplier_latch.halt_triggered==0){
         printf("MUL            : %s",cpu->instructions[cpu->multiplier_latch.pc]);
         if(strcmp(cpu->multiplier_latch.opcode,"ret") == 10){
             cpu->divider_latch = cpu->multiplier_latch;
@@ -273,10 +297,13 @@ void multiplier_unit(CPU* cpu){
         }
         cpu->divider_latch = cpu->multiplier_latch;
     }
+    else if (cpu->multiplier_latch.halt_triggered==1){
+        cpu->divider_latch = cpu->multiplier_latch;
+    }
 }
 
 void adder_unit(CPU* cpu){
-    if(cpu->adder_latch.has_inst == 1){
+    if(cpu->adder_latch.has_inst == 1 && cpu->adder_latch.halt_triggered==0){
         printf("ADD            : %s",cpu->instructions[cpu->adder_latch.pc]);
         if(strcmp(cpu->adder_latch.opcode,"ret") == 10){
             cpu->multiplier_latch = cpu->adder_latch;
@@ -298,10 +325,13 @@ void adder_unit(CPU* cpu){
         }
         cpu->multiplier_latch = cpu->adder_latch;
     }
+    else if (cpu->adder_latch.halt_triggered==1){
+        cpu->multiplier_latch = cpu->adder_latch;
+    }
 }
 
 void register_read_unit(CPU* cpu){
-    if(cpu->register_read_latch.has_inst == 1){
+    if(cpu->register_read_latch.has_inst == 1 && cpu->register_read_latch.halt_triggered==0){
         printf("RR             : %s",cpu->instructions[cpu->register_read_latch.pc]);
         if(strcmp(cpu->register_read_latch.opcode,"ret") == 10){
             cpu->adder_latch = cpu->register_read_latch;
@@ -309,15 +339,23 @@ void register_read_unit(CPU* cpu){
             cpu->register_read_latch.has_inst = 0;
             return;
         }
+        else if(strcmp(cpu->register_read_latch.opcode,"ld") == 0){
+            cpu->adder_latch = cpu->register_read_latch;
+            // Read memory map
+            return;
+        }
         cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
         cpu->adder_latch = cpu->register_read_latch;
         // printf("Reg: %s Value: %d",cpu->register_read_latch.rg1,cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value); 
         // printf("%s",cpu->register_read_latch.rg1+1);
     }
+    else if(cpu->register_read_latch.halt_triggered==1){
+        cpu->adder_latch = cpu->register_read_latch;
+    }
 }
 
 void analysis_unit(CPU* cpu){
-    if(cpu->analysis_latch.has_inst == 1){
+    if(cpu->analysis_latch.has_inst == 1 && cpu->analysis_latch.halt_triggered==0){
         // printf("Inside analysis_unit");
         printf("IA             : %s",cpu->instructions[cpu->analysis_latch.pc]);
         if(strcmp(cpu->analysis_latch.opcode,"ret") == 10){
@@ -328,10 +366,14 @@ void analysis_unit(CPU* cpu){
         }
         cpu->register_read_latch=cpu->analysis_latch;
     }
+    else if (cpu->analysis_latch.halt_triggered==1){
+        cpu->register_read_latch=cpu->analysis_latch;
+    }
 }
 
 void decode_unit(CPU* cpu){
-    if(cpu->decode_latch.has_inst == 1){
+    // printf("%d:%d",cpu->decode_latch.has_inst,cpu->decode_latch.halt_triggered);
+    if(cpu->decode_latch.has_inst == 1 && cpu->decode_latch.halt_triggered==0){
         printf("ID             : %s",cpu->instructions[cpu->decode_latch.pc]);
         if(strcmp(cpu->decode_latch.opcode,"ret") == 10){
             cpu->analysis_latch = cpu->decode_latch;
@@ -341,15 +383,13 @@ void decode_unit(CPU* cpu){
         }
         cpu->analysis_latch = cpu->decode_latch;
     }
-    else if(cpu->decode_latch.has_inst == 0 && strcmp(cpu->decode_latch.opcode,"ret") != 10){
-        cpu->decode_latch.has_inst = 0;
+    else if(cpu->decode_latch.halt_triggered==1){
         cpu->analysis_latch = cpu->decode_latch;
-        cpu->decode_latch.has_inst = 1;
     }
 }
 
 void fetch_unit(CPU* cpu){
-    if(cpu->fetch_latch.has_inst == 1 && cpu->memoryPort ==1){
+    if(cpu->fetch_latch.has_inst == 1 && cpu->fetch_latch.halt_triggered == 0){
         cpu->fetch_latch.pc = cpu->pc;
         cpu->pc++;
         printf("IF             : %s",cpu->instructions[cpu->fetch_latch.pc]);
@@ -408,13 +448,17 @@ void fetch_unit(CPU* cpu){
             cpu->fetch_latch.has_inst = 0;
             return;
         }
+        cpu->fetch_latch.halt_triggered = 0;
         cpu->decode_latch = cpu->fetch_latch;
+        // printf("%d",cpu->fetch_latch.halt_triggered);
+        // printf("%d",cpu->decode_latch.halt_triggered);
+        printf("given latch to decode");
     }
-    else if(cpu->memoryPort == 0){
+    else if(cpu->fetch_latch.halt_triggered == 1){
         printf("IF             : Halted due to MemoryPort\n");
-        cpu->fetch_latch.has_inst = 0;
+        // cpu->fetch_latch.has_inst = 0;
         cpu->decode_latch = cpu->fetch_latch;
-        cpu->fetch_latch.has_inst = 1;
+        cpu->fetch_latch.halt_triggered = 0;
         // printf("fetch inst: %d",cpu->fetch_latch.has_inst);
     }
 }

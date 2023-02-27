@@ -31,6 +31,7 @@ typedef struct Stages
 	long buffer; // Temp value
 	char or1[4]; // oprand 1
 	char or2[4]; // oprand 2
+	int halt_triggered; //Halted????
 
 } Stages;
 
@@ -47,6 +48,7 @@ typedef struct CPU
 	int pc; // Program Counter
 	int clock; // Total Cycle Completed
 	int memoryPort; // Memory Port
+	int halt_triggered; // Halted???
 
 	// The Pipeline
 	Stages fetch_latch; 
