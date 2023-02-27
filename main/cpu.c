@@ -127,12 +127,12 @@ CPU_run(CPU* cpu)
     // print_instructions(cpu);
     cpu->hazard = 0;
     simulate(cpu);
-    // print_registers(cpu);
+    print_registers(cpu);
     cpu->ipc = (double)cpu->instructionLength/(double)cpu->clock;
-    // printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
-    // printf("Total execution cycles: %d\n",cpu->clock);
-    // printf("Total instruction simulated: %d\n", cpu->instructionLength);
-    // printf("IPC: %6f\n",cpu->ipc);
+    printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
+    printf("Total execution cycles: %d\n",cpu->clock);
+    printf("Total instruction simulated: %d\n", cpu->instructionLength);
+    printf("IPC: %6f\n",cpu->ipc);
 
     return 0;
 }
@@ -193,11 +193,21 @@ int writeback_unit(CPU* cpu){
             return(1);
         }
         else if (strcmp(cpu->writeback_latch.opcode,"set")==0){
-            cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = atoi(cpu->writeback_latch.or1+1);
+            if (cpu->writeback_latch.or1[0] == 82){
+                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = cpu->writeback_latch.rg2_val;
+            }
+            else{
+                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = atoi(cpu->writeback_latch.or1+1);
+            }
             return(0);
         }
         else if (strcmp(cpu->writeback_latch.opcode,"ld")==0){
-            cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(atoi(cpu->writeback_latch.or1+1)/4);
+            if (cpu->writeback_latch.or1[0] == 82){
+                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(cpu->writeback_latch.rg2_val);
+            }
+            else{
+                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(atoi(cpu->writeback_latch.or1+1)/4);
+            }
             return(0);
         }
         cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = cpu->writeback_latch.buffer;
@@ -271,7 +281,12 @@ void divider_unit(CPU* cpu){
         }
         else if(strcmp(cpu->divider_latch.opcode,"div") == 0){
             //TODO Write Divide Logic
-            cpu->divider_latch.buffer = atoi(cpu->divider_latch.or1+1) / atoi(cpu->divider_latch.or2+1);
+            if (cpu->divider_latch.or1[0] == 82){
+                cpu->divider_latch.buffer = cpu->divider_latch.rg2_val / atoi(cpu->divider_latch.or2+1);
+            }
+            else{
+                cpu->divider_latch.buffer = atoi(cpu->divider_latch.or1+1) / atoi(cpu->divider_latch.or2+1);
+            }
         }
         cpu->branch_latch = cpu->divider_latch;
     }
@@ -291,7 +306,12 @@ void multiplier_unit(CPU* cpu){
         }
         else if(strcmp(cpu->multiplier_latch.opcode,"mul") == 0){
             //TODO Write Multiplication Logic
-            cpu->multiplier_latch.buffer = atoi(cpu->multiplier_latch.or1+1) * atoi(cpu->multiplier_latch.or2+1);
+            if (cpu->multiplier_latch.or1[0] == 82){
+                cpu->multiplier_latch.buffer = cpu->multiplier_latch.rg2_val * atoi(cpu->multiplier_latch.or2+1);
+            }
+            else{
+                cpu->multiplier_latch.buffer = atoi(cpu->multiplier_latch.or1+1) * atoi(cpu->multiplier_latch.or2+1);
+            }
         }
         cpu->divider_latch = cpu->multiplier_latch;
     }
@@ -310,11 +330,21 @@ void adder_unit(CPU* cpu){
         }
         else if(strcmp(cpu->adder_latch.opcode,"add") == 0){
             //TODO Write Addition Logic
-            cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) + atoi(cpu->adder_latch.or2+1);
+            if (cpu->adder_latch.or1[0] == 82){
+                cpu->adder_latch.buffer = cpu->adder_latch.rg2_val + atoi(cpu->adder_latch.or2+1);
+            }
+            else{
+                cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) + atoi(cpu->adder_latch.or2+1);
+            }  
         }
         else if(strcmp(cpu->adder_latch.opcode,"sub") == 0){
             //TODO Write Subtraction Logic
-            cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) - atoi(cpu->adder_latch.or2+1);
+            if (cpu->adder_latch.or1[0] == 82){
+                cpu->adder_latch.buffer = cpu->adder_latch.rg2_val - atoi(cpu->adder_latch.or2+1);
+            }
+            else{
+                cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) - atoi(cpu->adder_latch.or2+1);
+            }
         }
         cpu->multiplier_latch = cpu->adder_latch;
     }
@@ -336,6 +366,10 @@ void register_read_unit(CPU* cpu){
             cpu->adder_latch = cpu->register_read_latch;
             //TODO Read memory map
             return;
+        }
+        if (cpu->register_read_latch.or1[0] == 82){
+            strcpy(cpu->register_read_latch.rg2,cpu->register_read_latch.or1);
+            cpu->register_read_latch.rg2_val = cpu->regs[atoi(cpu->register_read_latch.or1+1)].value;
         }
         cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
         cpu->adder_latch = cpu->register_read_latch;
