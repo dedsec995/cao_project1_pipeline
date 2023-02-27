@@ -129,10 +129,10 @@ CPU_run(CPU* cpu)
     simulate(cpu);
     // print_registers(cpu);
     cpu->ipc = (double)cpu->instructionLength/(double)cpu->clock;
-    printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
-    printf("Total execution cycles: %d\n",cpu->clock);
-    printf("Total instruction simulated: %d\n", cpu->instructionLength);
-    printf("IPC: %6f\n",cpu->ipc);
+    // printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
+    // printf("Total execution cycles: %d\n",cpu->clock);
+    // printf("Total instruction simulated: %d\n", cpu->instructionLength);
+    // printf("IPC: %6f\n",cpu->ipc);
 
     return 0;
 }
@@ -155,10 +155,6 @@ create_registers(int size){
 *The Main Pipeline Implementation
 */ 
 void simulate(CPU* cpu){
-    // for (int i=0; i<=cpu->instructionLength; i++) {
-    //     printf("Instructions: %s",cpu->instructions[i]);
-    //     printf("--------------------------------\n");
-    // } 
     printf("================================");
     printf("\nClock Cycle #: %d\n",cpu->clock);
     printf("--------------------------------\n");
@@ -179,10 +175,11 @@ void simulate(CPU* cpu){
         decode_unit(cpu); 
         fetch_unit(cpu); 
         cpu->clock++;
-        printf("\n================================");
+        printf("================================");
         printf("\nClock Cycle #: %d\n",cpu->clock);
         printf("--------------------------------\n");
     }
+    printf("================================");
     //TODO Loop Or recursion?
     // Create Struct or F!!!
     // printf("Hahaha");
@@ -191,9 +188,7 @@ void simulate(CPU* cpu){
 int writeback_unit(CPU* cpu){
     if(cpu->writeback_latch.has_inst == 1 && cpu->writeback_latch.halt_triggered==0){
         printf("WB             : %s",cpu->instructions[cpu->writeback_latch.pc]);
-        // cpu->writeback_latch.has_inst = 0;
         if(strcmp(cpu->writeback_latch.opcode,"ret") == 10){
-            // printf("Last Instruction for Writeback");
             cpu->writeback_latch.has_inst = 0;
             return(1);
         }
@@ -202,9 +197,9 @@ int writeback_unit(CPU* cpu){
             return(0);
         }
         else if (strcmp(cpu->writeback_latch.opcode,"ld")==0){
+            cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(atoi(cpu->writeback_latch.or1+1)/4);
             return(0);
         }
-        // printf("%d\n",cpu->writeback_latch.buffer);
         cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = cpu->writeback_latch.buffer;
         return(0);
     }
@@ -216,18 +211,9 @@ int writeback_unit(CPU* cpu){
 
 void memory2_unit(CPU* cpu){
     if(cpu->memory2_latch.has_inst == 1 && cpu->memory2_latch.halt_triggered==0){
-        // printf("%d",cpu->memory2_latch.buffer);
-        // printf("%s",cpu->memory2_latch.opcode);
         printf("Mem2           : %s",cpu->instructions[cpu->memory2_latch.pc]);
-        // if (cpu->halt_triggered == 1){
-        //     cpu->fetch_latch.has_inst = 1;
-        //     cpu->halt_triggered == 0;
-        //     cpu->memoryPort = 1;
-        // }
-        // printf("%d",strcmp(cpu->memory2_latch.opcode,"ld"));
         if(strcmp(cpu->memory2_latch.opcode,"ret") == 10){
             cpu->writeback_latch = cpu->memory2_latch;
-            // printf("Last Instruction for Memory2");
             cpu->memory2_latch.has_inst = 0;
             return;
         }
@@ -235,7 +221,6 @@ void memory2_unit(CPU* cpu){
             cpu->hazard+=1;
             cpu->memoryPort = 0;
             cpu->fetch_latch.halt_triggered = 1;
-            printf("ld called, Halting Fetch\n");
         }
         cpu->writeback_latch = cpu->memory2_latch;
     }
@@ -250,7 +235,6 @@ void memory1_unit(CPU* cpu){
         printf("Mem1           : %s",cpu->instructions[cpu->memory1_latch.pc]);
         if(strcmp(cpu->memory1_latch.opcode,"ret") == 10){
             cpu->memory2_latch = cpu->memory1_latch;
-            // printf("Last Instruction for Memory1");
             cpu->memory1_latch.has_inst = 0;
             return;
         }
@@ -267,7 +251,6 @@ void branch_unit(CPU* cpu){
         printf("BR             : %s",cpu->instructions[cpu->branch_latch.pc]);
         if(strcmp(cpu->branch_latch.opcode,"ret") == 10){
             cpu->memory1_latch = cpu->branch_latch;
-            // printf("Last Instruction for Branch");
             cpu->branch_latch.has_inst = 0;
             return;
         }
@@ -280,19 +263,15 @@ void branch_unit(CPU* cpu){
 
 void divider_unit(CPU* cpu){
     if(cpu->divider_latch.has_inst == 1 && cpu->divider_latch.halt_triggered==0){
-        // printf("%d",cpu->divider_latch.buffer);
         printf("DIV            : %s",cpu->instructions[cpu->divider_latch.pc]);
         if(strcmp(cpu->divider_latch.opcode,"ret") == 10){
             cpu->branch_latch = cpu->divider_latch;
-            // printf("Last Instruction for Divider");
             cpu->divider_latch.has_inst = 0;
             return;
         }
         else if(strcmp(cpu->divider_latch.opcode,"div") == 0){
             //TODO Write Divide Logic
             cpu->divider_latch.buffer = atoi(cpu->divider_latch.or1+1) / atoi(cpu->divider_latch.or2+1);
-            // printf("div the numbers\n");
-            // printf("%d",cpu->divider_latch.buffer);
         }
         cpu->branch_latch = cpu->divider_latch;
     }
@@ -313,8 +292,6 @@ void multiplier_unit(CPU* cpu){
         else if(strcmp(cpu->multiplier_latch.opcode,"mul") == 0){
             //TODO Write Multiplication Logic
             cpu->multiplier_latch.buffer = atoi(cpu->multiplier_latch.or1+1) * atoi(cpu->multiplier_latch.or2+1);
-            // printf("mul the numbers\n");
-            // printf("%d",cpu->multiplier_latch.buffer);
         }
         cpu->divider_latch = cpu->multiplier_latch;
     }
@@ -328,21 +305,16 @@ void adder_unit(CPU* cpu){
         printf("ADD            : %s",cpu->instructions[cpu->adder_latch.pc]);
         if(strcmp(cpu->adder_latch.opcode,"ret") == 10){
             cpu->multiplier_latch = cpu->adder_latch;
-            // printf("Last Instruction for Adder");
             cpu->adder_latch.has_inst = 0;
             return;
         }
         else if(strcmp(cpu->adder_latch.opcode,"add") == 0){
             //TODO Write Addition Logic
-            // printf("Add the numbers\n");
             cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) + atoi(cpu->adder_latch.or2+1);
-            // printf("%d",cpu->adder_latch.buffer);
         }
         else if(strcmp(cpu->adder_latch.opcode,"sub") == 0){
             //TODO Write Subtraction Logic
             cpu->adder_latch.buffer = atoi(cpu->adder_latch.or1+1) - atoi(cpu->adder_latch.or2+1);
-            // printf("%d",cpu->adder_latch.buffer);
-            // printf("Sub the numbers\n");
         }
         cpu->multiplier_latch = cpu->adder_latch;
     }
@@ -356,19 +328,17 @@ void register_read_unit(CPU* cpu){
         printf("RR             : %s",cpu->instructions[cpu->register_read_latch.pc]);
         if(strcmp(cpu->register_read_latch.opcode,"ret") == 10){
             cpu->adder_latch = cpu->register_read_latch;
-            // printf("Last Instruction for Register read");
             cpu->register_read_latch.has_inst = 0;
             return;
         }
         else if(strcmp(cpu->register_read_latch.opcode,"ld") == 0){
+            cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
             cpu->adder_latch = cpu->register_read_latch;
-            // Read memory map
+            //TODO Read memory map
             return;
         }
         cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
         cpu->adder_latch = cpu->register_read_latch;
-        // printf("Reg: %s Value: %d",cpu->register_read_latch.rg1,cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value); 
-        // printf("%s",cpu->register_read_latch.rg1+1);
     }
     else if(cpu->register_read_latch.halt_triggered==1){
         cpu->adder_latch = cpu->register_read_latch;
@@ -381,7 +351,6 @@ void analysis_unit(CPU* cpu){
         printf("IA             : %s",cpu->instructions[cpu->analysis_latch.pc]);
         if(strcmp(cpu->analysis_latch.opcode,"ret") == 10){
             cpu->register_read_latch=cpu->analysis_latch;
-            // printf("Last Instruction for analysis");
             cpu->analysis_latch.has_inst = 0;
             return;
         }
@@ -398,7 +367,6 @@ void decode_unit(CPU* cpu){
         printf("ID             : %s",cpu->instructions[cpu->decode_latch.pc]);
         if(strcmp(cpu->decode_latch.opcode,"ret") == 10){
             cpu->analysis_latch = cpu->decode_latch;
-            // printf("Last Instruction for decode");
             cpu->decode_latch.has_inst = 0;
             return;
         }
@@ -464,23 +432,16 @@ void fetch_unit(CPU* cpu){
             strcpy(cpu->fetch_latch.opcode,token[1]);
         }
         if(strcmp(cpu->fetch_latch.opcode,"ret") == 10){
-            // printf("Last Instruction for fetch");
             cpu->decode_latch = cpu->fetch_latch;
             cpu->fetch_latch.has_inst = 0;
             return;
         }
         cpu->fetch_latch.halt_triggered = 0;
         cpu->decode_latch = cpu->fetch_latch;
-        // printf("%d",cpu->fetch_latch.halt_triggered);
-        // printf("%d",cpu->decode_latch.halt_triggered);
-        printf("given latch to decode");
     }
     else if(cpu->fetch_latch.halt_triggered == 1){
-        printf("IF             : Halted due to MemoryPort\n");
-        // cpu->fetch_latch.has_inst = 0;
         cpu->decode_latch = cpu->fetch_latch;
         cpu->fetch_latch.halt_triggered = 0;
-        // printf("fetch inst: %d",cpu->fetch_latch.has_inst);
     }
 }
 
