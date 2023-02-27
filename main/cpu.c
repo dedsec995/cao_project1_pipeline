@@ -79,6 +79,27 @@ print_registers(CPU *cpu){
     printf("================================\n\n");
 }
 
+int
+load_the_memory(int num){
+    char *filename = "../programs/memory_map.txt"; 
+    FILE *filePointer = fopen(filename, "r");
+    int county = 0;
+    int n;
+    if (filePointer == NULL)
+    {
+        printf("Error: could not open file %s", filename);
+    }
+    while (fscanf(filePointer, " %d", &n) == 1) {
+        if((num-1) == county){
+            fclose(filePointer);
+            return n;
+        }
+        county++;
+    }
+    fclose(filePointer);
+    return (-1);
+}
+
 /*
  * This function prints the instrucitons.
  */
