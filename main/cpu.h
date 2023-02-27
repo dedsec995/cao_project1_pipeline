@@ -28,7 +28,7 @@ typedef struct Stages
 	int rg1_val; // Register 1 Value
 	int rg2_val; // Register 2 value
 	int rg3_val; // Register 3 Value
-	int buffer; // Temp value
+	long buffer; // Temp value
 	char or1[4]; // oprand 1
 	char or2[4]; // oprand 2
 
@@ -83,7 +83,7 @@ CPU_stop(CPU* cpu);
 void 
 simulate(CPU* cpu);
 
-int 
+void 
 fetch_unit(CPU* cpu);
 
 void 
