@@ -445,12 +445,12 @@ void decode_unit(CPU* cpu){
 
 void fetch_unit(CPU* cpu){
     if(cpu->fetch_latch.has_inst == 1 && cpu->fetch_latch.halt_triggered == 0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("IF             : %s",cpu->instructions[cpu->fetch_latch.pc]);
-        }
         cpu->fetch_latch.pc = cpu->pc;
         cpu->pc++;
         char str1[128];
+        if(strcmp(options,"pipeline") == 0){
+            printf("IF             : %s",cpu->instructions[cpu->fetch_latch.pc]);
+        }
         strcpy(str1,cpu->instructions[cpu->fetch_latch.pc]);
 
         //-----------------------------Dynamic Spliting---------------------------------------------
