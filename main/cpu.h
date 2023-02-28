@@ -22,15 +22,15 @@ typedef struct Stages
 	int instAddr; // Instruction what??
 	int instLen; // Current Instruction Length
 	char opcode[128]; // Opcode
-	char rg1[4]; // Register 1
-	char rg2[4]; // Register 2
-	char rg3[4]; // Register 3
+	char rg1[20]; // Register 1
+	char rg2[20]; // Register 2
+	char rg3[20]; // Register 3
 	int rg1_val; // Register 1 Value
 	int rg2_val; // Register 2 value
 	int rg3_val; // Register 3 Value
 	long buffer; // Temp value
-	char or1[4]; // oprand 1
-	char or2[4]; // oprand 2
+	char or1[20]; // oprand 1
+	char or2[20]; // oprand 2
 	int halt_triggered; //Halted????
 
 } Stages;

@@ -6,6 +6,7 @@
 //  */
 // int
 // load_the_memory(int num){
+//     num = num/4;
 //     char *filename = "../programs/memory_map.txt"; 
 //     FILE *filePointer = fopen(filename, "r");
 //     int county = 0;
@@ -15,7 +16,7 @@
 //         printf("Error: could not open file %s", filename);
 //     }
 //     while (fscanf(filePointer, " %d", &n) == 1) {
-//         if((num-1) == county){
+//         if((num) == county){
 //             fclose(filePointer);
 //             return n;
 //         }
@@ -25,6 +26,6 @@
 //     return (-1);
 // }
 // int main(){
-//     printf("%d\n",load_the_memory(24024));
+//     printf("%d\n",load_the_memory(2572));
 //     return(0);
 // }

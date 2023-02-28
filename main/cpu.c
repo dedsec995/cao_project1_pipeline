@@ -81,6 +81,7 @@ print_registers(CPU *cpu){
 
 int
 load_the_memory(int num){
+    num = num/4;
     char *filename = "../programs/memory_map.txt"; 
     FILE *filePointer = fopen(filename, "r");
     int county = 0;
@@ -90,7 +91,7 @@ load_the_memory(int num){
         printf("Error: could not open file %s", filename);
     }
     while (fscanf(filePointer, " %d", &n) == 1) {
-        if((num-1) == county){
+        if((num) == county){
             fclose(filePointer);
             return n;
         }
@@ -203,11 +204,19 @@ int writeback_unit(CPU* cpu){
         }
         else if (strcmp(cpu->writeback_latch.opcode,"ld")==0){
             if (cpu->writeback_latch.or1[0] == 82){
+                printf("Loading from register\n");
+                printf("%s\n",cpu->writeback_latch.rg2);
+                printf("%d\n",cpu->writeback_latch.rg2_val);
                 cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(cpu->writeback_latch.rg2_val);
             }
             else{
-                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(atoi(cpu->writeback_latch.or1+1)/4);
+                // printf("%s\t",cpu->writeback_latch.or1+1);    
+                // printf("%s\t",cpu->writeback_latch.rg1);
+                // printf("%d\t",load_the_memory(atoi(cpu->writeback_latch.or1+1)));
+                cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = load_the_memory(atoi(cpu->writeback_latch.or1+1));
+                // printf("%d",cpu->regs[24].value);
             }
+            printf("Inside LD\n");
             return(0);
         }
         cpu->regs[atoi(cpu->writeback_latch.rg1+1)].value = cpu->writeback_latch.buffer;
@@ -362,14 +371,25 @@ void register_read_unit(CPU* cpu){
             return;
         }
         else if(strcmp(cpu->register_read_latch.opcode,"ld") == 0){
+            if (cpu->register_read_latch.or1[0] == 82){
+                cpu->register_read_latch.rg2_val = cpu->regs[atoi(cpu->register_read_latch.or1+1)].value;
+            }
+            else{
+                cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
+            }
+            printf("RR_LD\n");
             cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
             cpu->adder_latch = cpu->register_read_latch;
             //TODO Read memory map
             return;
         }
+        printf("%s\n",cpu->register_read_latch.or1);
         if (cpu->register_read_latch.or1[0] == 82){
+            printf("RR_RLD\n");
             strcpy(cpu->register_read_latch.rg2,cpu->register_read_latch.or1);
             cpu->register_read_latch.rg2_val = cpu->regs[atoi(cpu->register_read_latch.or1+1)].value;
+            printf("%s\t",cpu->register_read_latch.or1);
+            printf("%d\n",cpu->register_read_latch.rg2_val);
         }
         cpu->register_read_latch.rg1_val = cpu->regs[atoi(cpu->register_read_latch.rg1+1)].value;
         cpu->adder_latch = cpu->register_read_latch;
