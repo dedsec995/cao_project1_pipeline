@@ -11,21 +11,21 @@
 
 int binary_flag;
 
-void run_cpu_fun(char* filename){
+void run_cpu_fun(char* filename, char* option){
 
-    CPU *cpu = CPU_init(filename);
+    CPU *cpu = CPU_init(filename,option);
     CPU_run(cpu);
     CPU_stop(cpu);
 }
 
 int main(int argc, const char * argv[]) {
     int i;
-    if (argc<=1) {
+    if (argc<=2) {
         fprintf(stderr, "Error : missing required args\n");
         return -1;
     }
     char* filename = (char*)argv[1];
-    run_cpu_fun(filename);
-    
+    char* option = (char*)argv[2];
+    run_cpu_fun(filename,option);
     return 0;
 }
