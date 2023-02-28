@@ -84,3 +84,8 @@ diff_3:
 	diff -iw ../my/mycase3_pipeline.txt ../logs/case3_pipeline.txt
 	diff -iw ../my/mycase3_registers.txt ../logs/case3_registerstatus.txt
 	diff -iw ../my/mycase3_stats.txt ../logs/case3_stats.txt
+
+diff_4:
+	diff -iw ../my/mycase4_pipeline.txt ../logs/case4_pipeline.txt
+	diff -iw ../my/mycase4_registers.txt ../logs/case4_registerstatus.txt
+	diff -iw ../my/mycase4_stats.txt ../logs/case4_stats.txt
