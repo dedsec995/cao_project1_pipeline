@@ -76,7 +76,7 @@ print_registers(CPU *cpu){
         printf("REG[%2d]   |   Value=%d  \n",reg,cpu->regs[reg].value);
         printf("--------------------------------\n");
     }
-    printf("================================");
+    printf("================================\n\n");
 }
 
 int
@@ -128,16 +128,16 @@ CPU_run(CPU* cpu)
     // print_instructions(cpu);
     cpu->hazard = 0;
     simulate(cpu);
-    if(strcmp(options,"register") == 0){
+    // if(strcmp(options,"register") == 0){
         print_registers(cpu);
-    }
+    // }
     cpu->ipc = (double)cpu->instructionLength/(double)cpu->clock;
-    if(strcmp(options,"stats") == 0){
+    // if(strcmp(options,"stats") == 0){
         printf("Stalled cycles due to structural hazard: %d\n", cpu->hazard);
         printf("Total execution cycles: %d\n",cpu->clock);
         printf("Total instruction simulated: %d\n", cpu->instructionLength);
         printf("IPC: %6f\n",cpu->ipc);
-    }
+    // }
 
     return 0;
 }
@@ -160,11 +160,11 @@ create_registers(int size){
 *The Main Pipeline Implementation
 */ 
 void simulate(CPU* cpu){
-    if(strcmp(options,"pipeline") == 0){
-        printf("================================");
-        printf("\nClock Cycle #: %d\n",cpu->clock);
-        printf("--------------------------------\n");
-    }
+    // if(strcmp(options,"pipeline") == 0){
+    //     printf("================================");
+    //     printf("\nClock Cycle #: %d\n",cpu->clock);
+    //     printf("--------------------------------\n");
+    // }
     int last_inst = 0;
     cpu->fetch_latch.halt_triggered = 0;
     for(;;){
@@ -182,15 +182,15 @@ void simulate(CPU* cpu){
         decode_unit(cpu); 
         fetch_unit(cpu); 
         cpu->clock++;
-        if(strcmp(options,"pipeline") == 0){
-        printf("================================");
-        printf("\nClock Cycle #: %d\n",cpu->clock);
-        printf("--------------------------------\n");
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        // printf("================================");
+        // printf("\nClock Cycle #: %d\n",cpu->clock);
+        // printf("--------------------------------\n");
+        // }
     }
-    if(strcmp(options,"pipeline") == 0){
-    printf("================================");
-    }
+    // if(strcmp(options,"pipeline") == 0){
+    // printf("================================");
+    // }
     //TODO Loop Or recursion?
     // Create Struct or F!!!
     // printf("Hahaha");
@@ -198,9 +198,9 @@ void simulate(CPU* cpu){
 
 int writeback_unit(CPU* cpu){
     if(cpu->writeback_latch.has_inst == 1 && cpu->writeback_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("WB             : %s",cpu->instructions[cpu->writeback_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("WB             : %s",cpu->instructions[cpu->writeback_latch.pc]);
+        // }
         if(strcmp(cpu->writeback_latch.opcode,"ret") == 10){
             cpu->writeback_latch.has_inst = 0;
             return(1);
@@ -234,9 +234,9 @@ int writeback_unit(CPU* cpu){
 
 void memory2_unit(CPU* cpu){
     if(cpu->memory2_latch.has_inst == 1 && cpu->memory2_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("Mem2           : %s",cpu->instructions[cpu->memory2_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("Mem2           : %s",cpu->instructions[cpu->memory2_latch.pc]);
+        // }
         if(strcmp(cpu->memory2_latch.opcode,"ret") == 10){
             cpu->writeback_latch = cpu->memory2_latch;
             cpu->memory2_latch.has_inst = 0;
@@ -256,9 +256,9 @@ void memory2_unit(CPU* cpu){
 
 void memory1_unit(CPU* cpu){
     if(cpu->memory1_latch.has_inst == 1 && cpu->memory1_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("Mem1           : %s",cpu->instructions[cpu->memory1_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("Mem1           : %s",cpu->instructions[cpu->memory1_latch.pc]);
+        // }
         if(strcmp(cpu->memory1_latch.opcode,"ret") == 10){
             cpu->memory2_latch = cpu->memory1_latch;
             cpu->memory1_latch.has_inst = 0;
@@ -273,9 +273,9 @@ void memory1_unit(CPU* cpu){
 
 void branch_unit(CPU* cpu){
     if(cpu->branch_latch.has_inst == 1 && cpu->branch_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("BR             : %s",cpu->instructions[cpu->branch_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("BR             : %s",cpu->instructions[cpu->branch_latch.pc]);
+        // }
         if(strcmp(cpu->branch_latch.opcode,"ret") == 10){
             cpu->memory1_latch = cpu->branch_latch;
             cpu->branch_latch.has_inst = 0;
@@ -290,9 +290,9 @@ void branch_unit(CPU* cpu){
 
 void divider_unit(CPU* cpu){
     if(cpu->divider_latch.has_inst == 1 && cpu->divider_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("DIV            : %s",cpu->instructions[cpu->divider_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("DIV            : %s",cpu->instructions[cpu->divider_latch.pc]);
+        // }
         if(strcmp(cpu->divider_latch.opcode,"ret") == 10){
             cpu->branch_latch = cpu->divider_latch;
             cpu->divider_latch.has_inst = 0;
@@ -316,9 +316,9 @@ void divider_unit(CPU* cpu){
 
 void multiplier_unit(CPU* cpu){
     if(cpu->multiplier_latch.has_inst == 1 && cpu->multiplier_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("MUL            : %s",cpu->instructions[cpu->multiplier_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("MUL            : %s",cpu->instructions[cpu->multiplier_latch.pc]);
+        // }
         if(strcmp(cpu->multiplier_latch.opcode,"ret") == 10){
             cpu->divider_latch = cpu->multiplier_latch;
             cpu->multiplier_latch.has_inst = 0;
@@ -342,9 +342,9 @@ void multiplier_unit(CPU* cpu){
 
 void adder_unit(CPU* cpu){
     if(cpu->adder_latch.has_inst == 1 && cpu->adder_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("ADD            : %s",cpu->instructions[cpu->adder_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("ADD            : %s",cpu->instructions[cpu->adder_latch.pc]);
+        // }
         if(strcmp(cpu->adder_latch.opcode,"ret") == 10){
             cpu->multiplier_latch = cpu->adder_latch;
             cpu->adder_latch.has_inst = 0;
@@ -377,9 +377,9 @@ void adder_unit(CPU* cpu){
 
 void register_read_unit(CPU* cpu){
     if(cpu->register_read_latch.has_inst == 1 && cpu->register_read_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("RR             : %s",cpu->instructions[cpu->register_read_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("RR             : %s",cpu->instructions[cpu->register_read_latch.pc]);
+        // }
         if(strcmp(cpu->register_read_latch.opcode,"ret") == 10){
             cpu->adder_latch = cpu->register_read_latch;
             cpu->register_read_latch.has_inst = 0;
@@ -411,9 +411,9 @@ void register_read_unit(CPU* cpu){
 
 void analysis_unit(CPU* cpu){
     if(cpu->analysis_latch.has_inst == 1 && cpu->analysis_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("IA             : %s",cpu->instructions[cpu->analysis_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("IA             : %s",cpu->instructions[cpu->analysis_latch.pc]);
+        // }
         if(strcmp(cpu->analysis_latch.opcode,"ret") == 10){
             cpu->register_read_latch=cpu->analysis_latch;
             cpu->analysis_latch.has_inst = 0;
@@ -428,9 +428,9 @@ void analysis_unit(CPU* cpu){
 
 void decode_unit(CPU* cpu){
     if(cpu->decode_latch.has_inst == 1 && cpu->decode_latch.halt_triggered==0){
-        if(strcmp(options,"pipeline") == 0){
-            printf("ID             : %s",cpu->instructions[cpu->decode_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("ID             : %s",cpu->instructions[cpu->decode_latch.pc]);
+        // }
         if(strcmp(cpu->decode_latch.opcode,"ret") == 10){
             cpu->analysis_latch = cpu->decode_latch;
             cpu->decode_latch.has_inst = 0;
@@ -448,9 +448,9 @@ void fetch_unit(CPU* cpu){
         cpu->fetch_latch.pc = cpu->pc;
         cpu->pc++;
         char str1[128];
-        if(strcmp(options,"pipeline") == 0){
-            printf("IF             : %s",cpu->instructions[cpu->fetch_latch.pc]);
-        }
+        // if(strcmp(options,"pipeline") == 0){
+        //     printf("IF             : %s",cpu->instructions[cpu->fetch_latch.pc]);
+        // }
         strcpy(str1,cpu->instructions[cpu->fetch_latch.pc]);
 
         //-----------------------------Dynamic Spliting---------------------------------------------
