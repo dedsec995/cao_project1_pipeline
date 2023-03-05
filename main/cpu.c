@@ -76,7 +76,7 @@ print_registers(CPU *cpu){
         printf("REG[%2d]   |   Value=%d  \n",reg,cpu->regs[reg].value);
         printf("--------------------------------\n");
     }
-    printf("================================\n\n");
+    printf("================================");
 }
 
 int
